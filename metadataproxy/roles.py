@@ -89,8 +89,8 @@ def find_container(ip):
         log.info('Container id for IP {0} in cache'.format(ip))
         try:
             with PrintingBlockTimer('Container inspect'):
-                c = client.inspect_container(CONTAINER_MAPPING[ip])
-            return c
+                container = client.inspect_container(CONTAINER_MAPPING[ip])
+            return container
         except docker.errors.NotFound:
             msg = 'Container id {0} no longer mapped to {1}'
             log.error(msg.format(CONTAINER_MAPPING[ip], ip))

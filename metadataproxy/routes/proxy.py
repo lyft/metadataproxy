@@ -1,8 +1,5 @@
-import re
-
 from flask import Response
 from flask import request
-from flask import redirect
 from flask import stream_with_context
 from flask import jsonify
 
@@ -23,6 +20,7 @@ def _supports_iam(version):
     '''
     return version >= '2012-01-12'
 
+
 @app.route('/<api_version>/meta-data/iam/info', strict_slashes=False)
 @app.route('/<api_version>/meta-data/iam/info/<path:junk>')
 def iam_role_info(api_version, junk=None):
@@ -37,6 +35,7 @@ def iam_role_info(api_version, junk=None):
         log.error('Role name not found; returning 404.')
         return '', 404
 
+
 @app.route('/<api_version>/meta-data/iam/security-credentials/')
 def iam_role_name(api_version):
     if not _supports_iam(api_version):
@@ -48,6 +47,7 @@ def iam_role_name(api_version):
     else:
         log.error('Role name not found; returning 404.')
         return '', 404
+
 
 @app.route('/<api_version>/meta-data/iam/security-credentials/<requested_role>',
            strict_slashes=False)
@@ -70,6 +70,7 @@ def iam_sts_credentials(api_version, requested_role, junk=None):
         api_version=api_version
     )
     return jsonify(assumed_role)
+
 
 @app.route('/<path:url>')
 @app.route('/')
