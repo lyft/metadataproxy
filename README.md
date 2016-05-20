@@ -167,4 +167,3 @@ easily reproduce your bug.
 ### Submit pull requests
 
 Our only method of accepting code changes is through github pull requests.
-
