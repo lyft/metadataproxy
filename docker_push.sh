@@ -8,7 +8,7 @@ do
        want_push='true'
    fi
 done
-if [ "$TRAVIS_PULL_REQUEST" == "false" && "$want_push" == "true" ]
+if [ "$TRAVIS_PULL_REQUEST" == "false" -a "$want_push" == "true" ]
 then
     docker login -e $DOCKER_EMAIL -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
     export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH ; fi`
