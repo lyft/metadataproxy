@@ -11,4 +11,4 @@ install: "pip install -r requirements.txt"
 script: make test
 
 after_success:
-  - docker_push.sh
+  - ./docker_push.sh
