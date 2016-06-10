@@ -90,7 +90,12 @@ def find_container(ip):
         try:
             with PrintingBlockTimer('Container inspect'):
                 container = client.inspect_container(CONTAINER_MAPPING[ip])
-            return container
+            # Only return a cached container if it is running.
+            if container['State']['Running']:
+                return container
+            else:
+                log.error('Container id {0} is no longger running'.format(ip))
+                del CONTAINER_MAPPING[ip]
         except docker.errors.NotFound:
             msg = 'Container id {0} no longer mapped to {1}'
             log.error(msg.format(CONTAINER_MAPPING[ip], ip))
