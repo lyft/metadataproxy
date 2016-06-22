@@ -12,3 +12,13 @@ script: make test
 
 after_success:
   - ./docker_push.sh
+
+deploy:
+  provider: pypi
+  user: lyftpypi
+  password:
+    secure: oR6//kd8aeuG+NaBtq/e2rlwHFOx5YOyntw6jDXZUuRoG69mKTCMAo0HT5aTHO+M9T0dzAxzmdsWEGSesvNn7GUt/xKtJ4rsswfA+ybBIeRXCOPvNimKP32ElmJUb6xaN1PF5YOmWygQvadofmO//383xu2dEUzrvAhyl/3VpODMqsTQiCUlHDRiuvdo+yFTbkF73MNMcBfElcebENmEB4h6nGWtchuQ29tStNAXDQd9jTvVsxihjN0/ojduDDR0Dv/MW+b1CCC8Rnv1Sz5KSg7Ib8T3ilGZ9+LyKBVPtKylGeOViMw/ffisEt7SgTjBA/gMOLhtOZ58vQfQYKieVlkNGAiTVewATeBN1jt1V+SC/wEdH51ePO8Lj7/0DBmRxpVbfLA3qQn43+za4OmRkpwNZMDtCDHl1trHlC0B3y7QrXt6XoSaWG8Rar6ai7Itv4AkXR5hC5rZF/AT+sQDdgntSxnjtBWJDkGhyh+v2zUkrJN8MHhbwAvLG7f6CKEeTOjWGY3kxxvbcBKRrtRf//spqRGPvnXuqR1fHHhm14yQfNAfzZXc1Syy3fKrMss7QDQrILGW+eoPozxnjr/kTAJ6+wzWQYhXA2uQktT1aB46fr/WnF9Vc+cDsQ6Vm01sgxCB6lF7LKBr0Oz5MgmAo5Cwzp7WvOKILKI0KUCEHZ4=
+  on:
+    tags: true
+    distributions: sdist bdist_wheel
+    repo: lyft/metadataproxy
