@@ -7,13 +7,11 @@ The metadataproxy is used to allow containers to acquire IAM roles.
 From inside of the repo run the following commands:
 
 ```bash
-cd /srv
-git clone https://github.com/lyft/metadataproxy
-cd metadataproxy
+mkdir -p /srv/metadataproxy
+cd /srv/metadataproxy
 virtualenv venv
 source venv/bin/activate
-pip install -r requirements.txt
-pip install -r requirements_wsgi.txt
+pip install metadataproxy
 deactivate
 ```
 
@@ -167,4 +165,3 @@ easily reproduce your bug.
 ### Submit pull requests
 
 Our only method of accepting code changes is through github pull requests.
-
