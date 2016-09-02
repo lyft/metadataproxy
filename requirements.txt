@@ -13,7 +13,7 @@ Flask==0.10.1
 # Python client for Docker.
 # License: Apache2
 # Upstream url: https://github.com/docker/docker-py/
-docker-py==1.6.0
+docker-py==1.9.0
 
 # The modular source code checker: pep8, pyflakes and co
 # License: MIT
