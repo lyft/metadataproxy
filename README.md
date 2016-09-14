@@ -98,7 +98,16 @@ the metadataproxy. The following example assumes the metadataproxy is run on
 the host, and not in a container:
 
 ```
-/sbin/iptables --wait -t nat -A PREROUTING  -i docker0 -p tcp --dport 80 --destination 169.254.169.254 --jump DNAT --to-destination 127.0.0.1:8000
+/sbin/iptables \
+  --append PREROUTING \
+  --destination 169.254.169.254 \
+  --dport 80 \
+  --in-interface docker0 \
+  --jump DNAT \
+  --protocol tcp \
+  --table nat \
+  --to-destination 127.0.0.1:8000 \
+  --wait
 ```
 
 If you'd like to start the metadataproxy in a container, it's recommended to
@@ -112,8 +121,26 @@ probably want to restrict proxy access to the docker0 interface!
 
 ```
 LOCAL_IPV4=$(curl http://169.254.169.254/latest/meta-data/local-ipv4)
-/sbin/iptables --wait -t nat -A PREROUTING  -i docker0 -p tcp --dport 80 --destination 169.254.169.254 --jump DNAT --to-destination $LOCAL_IPV4:8000
-/sbin/iptables --wait -I INPUT 1 -p tcp --dport 80 \! -i docker0 -j DROP
+
+/sbin/iptables \
+  --append PREROUTING \
+  --destination 169.254.169.254 \
+  --dport 80 \
+  --in-interface docker0 \
+  --jump DNAT \
+  --protocol tcp \
+  --table nat \
+  --to-destination $LOCAL_IPV4:8000 \
+  --wait
+
+/sbin/iptables
+  --wait \
+  --insert INPUT 1
+  --protocol tcp \
+  --dport 80 \
+  \! \
+  --in-interface docker0 \
+  --jump DROP
 ```
 
 ## Run metadataproxy without docker
