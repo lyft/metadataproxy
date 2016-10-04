@@ -62,7 +62,8 @@ def log_exec_time(method):
 def docker_client():
     global _docker_client
     if _docker_client is None:
-        _docker_client = docker.Client(base_url=app.config['DOCKER_URL'])
+        _docker_client = docker.Client(base_url=app.config['DOCKER_URL'],
+                                       version=app.config['DOCKER_VERSION'])
     return _docker_client
 
 
