@@ -8,6 +8,7 @@ containers:
     network: host
     mounts:
       - /var/run/docker.sock
+    start_phase: sequential_init
     exports:
       - name: api
         port: 45001
