@@ -8,6 +8,7 @@ containers:
     network: host
     mounts:
       - /var/run/docker.sock
+      - /var/run/docker_sockets
     start_phase: sequential_init
     exports:
       - name: api
