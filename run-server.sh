@@ -8,4 +8,10 @@ if [ "z$PORT" = "z" ]; then
     PORT=8000
 fi
 
-/usr/local/bin/gunicorn metadataproxy:app --workers=2 -k gevent -b $HOST:$PORT
+if [ "$DEBUG" = "True" ]; then
+    LEVEL="debug"
+else
+    LEVEL="warning"
+fi
+
+/usr/local/bin/gunicorn metadataproxy:app --log-level $LEVEL --workers=2 -k gevent -b $HOST:$PORT

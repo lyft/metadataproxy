@@ -127,6 +127,15 @@ def find_container(ip):
             log.debug(msg.format(_id, ip))
             CONTAINER_MAPPING[ip] = _id
             return c
+        # Try matching container to caller by sub network IP address
+        _networks = c['NetworkSettings']['Networks']
+        if len(_networks) > 0:
+            for _network in _networks:
+                if _networks[_network]['IPAddress'] == ip:
+                    msg = 'Container id {0} mapped to {1} by sub-network IP match'
+                    log.debug(msg.format(_id, ip))
+                    CONTAINER_MAPPING[ip] = _id
+                    return c
         # Try matching container to caller by hostname match
         if app.config['ROLE_REVERSE_LOOKUP']:
             hostname = c['Config']['Hostname']

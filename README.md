@@ -59,6 +59,8 @@ you can use the following configuration option:
 export DEFAULT_ROLE=my-default-role
 ```
 
+Note: this can be the full role ARN or simply role name.
+
 ### Role structure
 
 A useful way to deploy this metadataproxy is with a two-tier role
@@ -91,6 +93,24 @@ structure:
 
 4. Now customize `ContainerRole1` & friends as you like
 
+Note: The `ContainerRole1` role should have a trust relationship that allows it to be assumed by the `user` which is associated to the host machine running the `sts:AssumeRole` command.  An example trust relationship for `ContainRole1` may look like:
+
+```
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::012345678901:root",
+        "Service": "ec2.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+```
+
 ### Routing container traffic to metadataproxy
 
 Using iptables, we can forward traffic meant to 169.254.169.254 from docker0 to
@@ -101,10 +121,10 @@ the host, and not in a container:
 /sbin/iptables \
   --append PREROUTING \
   --destination 169.254.169.254 \
+  --protocol tcp \
   --dport 80 \
   --in-interface docker0 \
   --jump DNAT \
-  --protocol tcp \
   --table nat \
   --to-destination 127.0.0.1:8000 \
   --wait
@@ -125,10 +145,10 @@ LOCAL_IPV4=$(curl http://169.254.169.254/latest/meta-data/local-ipv4)
 /sbin/iptables \
   --append PREROUTING \
   --destination 169.254.169.254 \
+  --protocol tcp \
   --dport 80 \
   --in-interface docker0 \
   --jump DNAT \
-  --protocol tcp \
   --table nat \
   --to-destination $LOCAL_IPV4:8000 \
   --wait
