@@ -12,16 +12,19 @@
 # limitations under the License.
 
 from setuptools import setup, find_packages
-from pip.req import parse_requirements
 
-reqs_base = parse_requirements("requirements.txt", session=False)
-reqs_wsgi = parse_requirements("requirements_wsgi.txt", session=False)
+with open('requirements.txt') as f:
+    reqs_base = f.read().splitlines()
+
+with open('requirements_wsgi.txt') as f:
+    reqs_wsgi = f.read().splitlines()
+
 reqs = [str(ir.req) for ir in reqs_base]
 reqs = reqs + [str(ir.req) for ir in reqs_wsgi]
 
 setup(
     name="metadataproxy",
-    version="1.2.1",
+    version="1.2.2",
     packages=find_packages(exclude=["test*"]),
     install_requires=reqs,
     author="Ryan Lane",
