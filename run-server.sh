@@ -1,10 +1,10 @@
 #!/bin/sh -e
 
-if [ "z$HOST" = "z" ]; then
+if [ -z "$HOST" ]; then
     HOST="0.0.0.0"
 fi
 
-if [ "z$PORT" = "z" ]; then
+if [ -z "$PORT" ]; then
     PORT=8000
 fi
 
@@ -14,4 +14,8 @@ else
     LEVEL="warning"
 fi
 
-/usr/local/bin/gunicorn metadataproxy:app --log-level $LEVEL --workers=2 -k gevent -b $HOST:$PORT
+if [ -z "$WORKERS" ]; then
+    WORKERS="1"
+fi
+
+/usr/local/bin/gunicorn metadataproxy:app --log-level ${LEVEL} --workers=${WORKERS} -k gevent -b ${HOST}:${PORT} --access-logfile=- --error-logfile=-

@@ -1,3 +1,9 @@
+## 1.2.6
+
+* In run-server.sh, sent stdout and stderr to stdout
+* In run-server.sh, make the workers configurable
+* In run-server.sh, use better bash syntax
+
 ## 1.2.5
 
 * Add more package data to setup.py for sdist packing fix
