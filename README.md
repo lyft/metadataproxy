@@ -46,20 +46,62 @@ credentials before the service is started.
 For IAM routes, the metadataproxy will use STS to assume roles for containers.
 To do so it takes the incoming IP address of metadata requests and finds the
 running docker container associated with the IP address. It uses the value of
-the container's IAM_ROLE environment variable as the role it will assume. It
+the container's `IAM_ROLE` environment variable as the role it will assume. It
 then assumes the role and gives back STS credentials in the metadata response.
 
-So, to specify the role of a container, simply launch it with the IAM_ROLE
+STS-attained credentials are cached and automatically rotated as they expire.
+
+#### Container-specific roles
+
+To specify the role of a container, simply launch it with the `IAM_ROLE`
 environment variable set to the IAM role you wish the container to run with.
 
-If you'd like containers to fallback to a default role if no role is specified,
-you can use the following configuration option:
-
+```shell
+docker run -e IAM_ROLE=my-role ubuntu:14.04
 ```
+
+#### Default Roles
+
+When no role is matched, `metadataproxy` will use the role specified in the 
+`DEFAULT_ROLE` `metadataproxy` environment variable. If no DEFAULT_ROLE is
+specified as a fallback, then your docker container without an `IAM_ROLE`
+environment variable will fail to retrieve credentials.
+
+The `DEFAULT_ROLE` environment variable can be specified locally:
+
+```shell
 export DEFAULT_ROLE=my-default-role
 ```
 
-Note: this can be the full role ARN or simply role name.
+Or can be specified via docker env:
+
+```shell
+docker run \
+       -e DEFAULT_ROLE=my-default-role \
+       ...
+```
+
+#### Role Formats
+
+The following are all supported formats for specifying roles:
+
+- By Role:
+
+    ```shell
+    IAM_ROLE=my-role
+    ```
+
+- By Role@AccountId
+
+    ```shell
+    IAM_ROLE=my-role@012345678910
+    ```
+
+- By ARN:
+
+    ```shell
+    IAM_ROLE=arn:aws:iam::012345678910:role/my-role
+    ```
 
 ### Role structure
 
