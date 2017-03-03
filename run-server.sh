@@ -1,20 +1,20 @@
 #!/bin/sh -e
 
-if [ -z "$HOST" ]; then
+if [ "z${HOST}" = "z" ]; then
     HOST="0.0.0.0"
 fi
 
-if [ -z "$PORT" ]; then
+if [ "z${PORT}" = "z" ]; then
     PORT=8000
 fi
 
-if [ "$DEBUG" = "True" ]; then
+if [ "${DEBUG}" = "True" ]; then
     LEVEL="debug"
 else
     LEVEL="warning"
 fi
 
-if [ -z "$WORKERS" ]; then
+if [ "z${WORKERS}" = "z" ]; then
     WORKERS="1"
 fi
 

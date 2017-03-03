@@ -185,6 +185,30 @@ docker run --net=host \
     metadataproxy
 ```
 
+### gunicorn settings
+
+The following environment variables can be set to configure gunicorn (defaults
+are set in the examples):
+
+```
+# Change the IP address the gunicorn worker is listening on. You likely want to
+# leave this as the default
+HOST=0.0.0.0
+
+# Change the port the gunicorn worker is listening on.
+PORT=8000
+
+# Change the number of worker processes gunicorn will run with. The default is
+# 1, which is likely enough since metadataproxy is using gevent and its work is
+# completely IO bound. Increasing the number of workers will likely make your
+# in-memory cache less efficient
+WORKERS=1
+
+# Enable debug mode (you should not do this in production as it will leak IAM
+# credentials into your logs)
+DEBUG=False
+```
+
 ## Contributing
 
 ### Code of conduct
