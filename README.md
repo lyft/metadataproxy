@@ -153,9 +153,9 @@ LOCAL_IPV4=$(curl http://169.254.169.254/latest/meta-data/local-ipv4)
   --to-destination $LOCAL_IPV4:8000 \
   --wait
 
-/sbin/iptables
+/sbin/iptables \
   --wait \
-  --insert INPUT 1
+  --insert INPUT 1 \
   --protocol tcp \
   --dport 80 \
   \! \
