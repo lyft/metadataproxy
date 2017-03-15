@@ -131,7 +131,7 @@ def find_container(ip):
             return c
         # Try matching container to caller by sub network IP address
         _networks = c['NetworkSettings']['Networks']
-        if len(_networks) > 0:
+        if _networks:
             for _network in _networks:
                 if _networks[_network]['IPAddress'] == ip:
                     msg = 'Container id {0} mapped to {1} by sub-network IP match'
