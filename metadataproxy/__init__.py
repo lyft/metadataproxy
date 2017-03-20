@@ -8,7 +8,6 @@ from logging import StreamHandler
 
 log = logging.getLogger(__name__)
 stream_handler = StreamHandler(stream=sys.stdout)
-    
 
 app = Flask(__name__)
 app.config.from_object(settings)
