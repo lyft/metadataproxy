@@ -8,6 +8,7 @@ from flask import stream_with_context
 
 from metadataproxy import roles
 from metadataproxy.log import get_logger
+from metadataproxy.log import log_request
 from metadataproxy.settings import Settings
 
 

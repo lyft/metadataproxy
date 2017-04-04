@@ -9,6 +9,7 @@ from flask import url_for
 
 from metadataproxy import roles
 from metadataproxy.log import get_logger
+from metadataproxy.log import log_request
 from metadataproxy.roles import GetRoleError
 from metadataproxy.settings import Settings
 
