@@ -26,7 +26,7 @@ LOG_SETTINGS = {
     'disable_existing_loggers': True,
     'formatters': {
         'normal': {
-            'format': "[%(asctime)s] %(name)s - %(levelname)s - %(message)s",
+            'format': "[%(asctime)s +0000] [%(process)d] [%(levelname)s] [name:%(name)s] %(message)s",
             'datefmt': "%Y-%m-%d %H:%M:%S"
         },
         'werkzeug': {
