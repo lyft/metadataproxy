@@ -13,8 +13,10 @@ import docker.errors
 from botocore.exceptions import ClientError
 
 # Import metadataproxy libs
-from metadataproxy import app
-from metadataproxy import log
+from metadataproxy.log import get_logger
+from metadataproxy.settings import Settings
+
+logger = get_logger(__name__)
 
 ROLES = {}
 CONTAINER_MAPPING = {}
@@ -22,8 +24,8 @@ _docker_client = None
 _iam_client = None
 _sts_client = None
 
-if app.config['ROLE_MAPPING_FILE']:
-    with open(app.config.get('ROLE_MAPPING_FILE'), 'r') as f:
+if Settings.ROLE_MAPPING_FILE:
+    with open(Settings.ROLE_MAPPING_FILE, 'r') as f:
         ROLE_MAPPINGS = json.loads(f.read())
 else:
     ROLE_MAPPINGS = {}
@@ -50,7 +52,7 @@ class PrintingBlockTimer(BlockTimer):
         msg = "Execution took {0:f}s".format(self.exec_duration)
         if self.prefix:
             msg = self.prefix + ': ' + msg
-        log.debug(msg)
+        logger.debug(msg)
 
 
 def log_exec_time(method):
@@ -64,7 +66,7 @@ def log_exec_time(method):
 def docker_client():
     global _docker_client
     if _docker_client is None:
-        _docker_client = docker.Client(base_url=app.config['DOCKER_URL'])
+        _docker_client = docker.Client(base_url=Settings.DOCKER_URL)
     return _docker_client
 
 
@@ -84,11 +86,11 @@ def sts_client():
 
 @log_exec_time
 def find_container(ip):
-    pattern = re.compile(app.config['HOSTNAME_MATCH_REGEX'])
+    pattern = re.compile(Settings.HOSTNAME_MATCH_REGEX)
     client = docker_client()
     # Try looking at the container mapping cache first
     if ip in CONTAINER_MAPPING:
-        log.info('Container id for IP {0} in cache'.format(ip))
+        logger.info('Container id for IP {0} in cache'.format(ip))
         try:
             with PrintingBlockTimer('Container inspect'):
                 container = client.inspect_container(CONTAINER_MAPPING[ip])
@@ -96,20 +98,20 @@ def find_container(ip):
             if container['State']['Running']:
                 return container
             else:
-                log.error('Container id {0} is no longger running'.format(ip))
+                logger.error('Container id {0} is no longger running'.format(ip))
                 del CONTAINER_MAPPING[ip]
         except docker.errors.NotFound:
             msg = 'Container id {0} no longer mapped to {1}'
-            log.error(msg.format(CONTAINER_MAPPING[ip], ip))
+            logger.error(msg.format(CONTAINER_MAPPING[ip], ip))
             del CONTAINER_MAPPING[ip]
 
     _fqdn = None
     with PrintingBlockTimer('Reverse DNS'):
-        if app.config['ROLE_REVERSE_LOOKUP']:
+        if Settings.ROLE_REVERSE_LOOKUP:
             try:
                 _fqdn = socket.gethostbyaddr(ip)[0]
             except socket.error as e:
-                log.error('gethostbyaddr failed: {0}'.format(e.args))
+                logger.error('gethostbyaddr failed: {0}'.format(e.args))
                 pass
 
     with PrintingBlockTimer('Container fetch'):
@@ -120,13 +122,13 @@ def find_container(ip):
             with PrintingBlockTimer('Container inspect'):
                 c = client.inspect_container(_id)
         except docker.errors.NotFound:
-            log.error('Container id {0} not found'.format(_id))
+            logger.error('Container id {0} not found'.format(_id))
             continue
         # Try matching container to caller by IP address
         _ip = c['NetworkSettings']['IPAddress']
         if ip == _ip:
             msg = 'Container id {0} mapped to {1} by IP match'
-            log.debug(msg.format(_id, ip))
+            logger.debug(msg.format(_id, ip))
             CONTAINER_MAPPING[ip] = _id
             return c
         # Try matching container to caller by sub network IP address
@@ -135,11 +137,11 @@ def find_container(ip):
             for _network in _networks:
                 if _networks[_network]['IPAddress'] == ip:
                     msg = 'Container id {0} mapped to {1} by sub-network IP match'
-                    log.debug(msg.format(_id, ip))
+                    logger.debug(msg.format(_id, ip))
                     CONTAINER_MAPPING[ip] = _id
                     return c
         # Try matching container to caller by hostname match
-        if app.config['ROLE_REVERSE_LOOKUP']:
+        if Settings.ROLE_REVERSE_LOOKUP:
             hostname = c['Config']['Hostname']
             domain = c['Config']['Domainname']
             fqdn = '{0}.{1}'.format(hostname, domain)
@@ -149,18 +151,18 @@ def find_container(ip):
             if _groups and groups:
                 if groups[0] == _groups[0]:
                     msg = 'Container id {0} mapped to {1} by FQDN match'
-                    log.debug(msg.format(_id, ip))
+                    logger.debug(msg.format(_id, ip))
                     CONTAINER_MAPPING[ip] = _id
                     return c
 
-    log.error('No container found for ip {0}'.format(ip))
+    logger.error('No container found for ip {0}'.format(ip))
     return None
 
 
 def check_role_name_from_ip(ip, requested_role):
     role_name = get_role_name_from_ip(ip)
     if role_name == requested_role:
-        log.debug('Detected Role: {0}, Requested Role: {1}'.format(
+        logger.debug('Detected Role: {0}, Requested Role: {1}'.format(
             role_name, requested_role
         ))
         return True
@@ -169,8 +171,8 @@ def check_role_name_from_ip(ip, requested_role):
 
 @log_exec_time
 def get_role_name_from_ip(ip, stripped=True):
-    if app.config['ROLE_MAPPING_FILE']:
-        return ROLE_MAPPINGS.get(ip, app.config['DEFAULT_ROLE'])
+    if Settings.ROLE_MAPPING_FILE:
+        return ROLE_MAPPINGS.get(ip, Settings.DEFAULT_ROLE)
     container = find_container(ip)
     if container:
         env = container['Config']['Env']
@@ -185,11 +187,11 @@ def get_role_name_from_ip(ip, stripped=True):
                 else:
                     return val
         msg = "Couldn't find IAM_ROLE variable. Returning DEFAULT_ROLE: {0}"
-        log.debug(msg.format(app.config['DEFAULT_ROLE']))
+        logger.debug(msg.format(Settings.DEFAULT_ROLE))
         if stripped:
-            return app.config['DEFAULT_ROLE'].split('@')[0]
+            return Settings.DEFAULT_ROLE.split('@')[0]
         else:
-            return app.config['DEFAULT_ROLE']
+            return Settings.DEFAULT_ROLE
     else:
         return None
 
@@ -224,8 +226,8 @@ def get_role_arn(role_name):
     # No role name/id, try to get the default account id
     else:
         assume_role = role_name
-        if app.config['DEFAULT_ACCOUNT_ID']:
-            account_name = app.config['DEFAULT_ACCOUNT_ID']
+        if Settings.DEFAULT_ACCOUNT_ID:
+            account_name = Settings.DEFAULT_ACCOUNT_ID
         # No default account id defined. Get the ARN by looking up the role
         # name. This is a backwards compat use-case for when we didn't require
         # the default account id.
@@ -240,7 +242,7 @@ def get_role_arn(role_name):
                 raise GetRoleError((response['HTTPStatusCode'], e.message))
     # Map the name to an account ID. If it isn't found, assume an ID was passed
     # in and use that.
-    account_id = app.config['AWS_ACCOUNT_MAP'].get(account_name, account_name)
+    account_id = Settings.AWS_ACCOUNT_MAP.get(account_name, account_name)
     # Return a generated ARN
     return 'arn:aws:iam::{0}:role/{1}'.format(account_id, assume_role)
 

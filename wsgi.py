@@ -1,5 +1,6 @@
-from metadataproxy import app
+from metadataproxy import make_application
 
+app = make_application()
 
 if __name__ == '__main__':
     app.run(

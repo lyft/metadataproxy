@@ -214,7 +214,7 @@ the necessary settings discussed in the configuration section.
 source my_config
 cd /srv/metadataproxy
 source venv/bin/activate
-gunicorn metadataproxy:app --workers=2 -k gevent
+gunicorn metadataproxy:make_application\(\) --workers=2 -k gevent
 ```
 
 ## Run metadataproxy with docker
