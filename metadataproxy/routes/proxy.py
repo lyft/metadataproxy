@@ -63,7 +63,7 @@ def iam_role_name(api_version):
 
 
 @blueprint_http.route('/<api_version>/meta-data/iam/security-credentials/<requested_role>',
-           strict_slashes=False)
+                      strict_slashes=False)
 @blueprint_http.route('/<api_version>/meta-data/iam/security-credentials/<requested_role>/<path:junk>')
 def iam_sts_credentials(api_version, requested_role, junk=None):
     if not _supports_iam(api_version):
