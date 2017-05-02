@@ -26,11 +26,11 @@ LOG_SETTINGS = {
     'disable_existing_loggers': True,
     'formatters': {
         'normal': {
-            'format': "[%(asctime)s +0000] [%(process)d] [%(levelname)s] [name:%(name)s] %(message)s",
+            'format': "[%(asctime)s +0000] %(name)s [pid:%(process)d] - %(levelname)s - %(message)s",
             'datefmt': "%Y-%m-%d %H:%M:%S"
         },
         'werkzeug': {
-            'format': "[%(asctime)s +0000] [%(process)d] [%(levelname)s] [name:%(name)s] %(message)s",
+            'format': "[%(asctime)s +0000] %(name)s [pid:%(process)d] - %(levelname)s - %(message)s",
             'datefmt': "%Y-%m-%d %H:%M:%S"
         },
     },
@@ -135,7 +135,7 @@ def get_logger(name, loglevel=None):
     del logger.handlers[:]
 
     if not loglevel:
-        loglevel = logging.INFO
+        loglevel = logging.DEBUG
 
     logger.setLevel(loglevel)
     if name == 'werkzeug':
