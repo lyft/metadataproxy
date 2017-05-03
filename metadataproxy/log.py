@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 log:
-    Encapsulates all of the log setup for seatgeek default loggers.
+    Encapsulates all of the log setup for metadataproxy default loggers.
 
     Environment Variables:
         LOGGING_VERBOSE: Should run logger in verbose mode, which outputs
