@@ -19,5 +19,5 @@ if [ "z$WORKERS" = "z" ]; then
 fi
 
 export PYTHONUNBUFFERED="true"
-
-/usr/local/bin/gunicorn metadataproxy:app --log-level $LEVEL --workers=$WORKERS -k gevent -b $HOST:$PORT --access-logfile - --error-logfile - --log-file -
+export PYTHONPATH=$PWD
+/usr/local/bin/gunicorn metadataproxy:make_application\(\) --logger-class metadataproxy.glogging.Logger --log-level $LEVEL --workers=$WORKERS -k gevent -b $HOST:$PORT --access-logfile - --error-logfile - --log-file -
