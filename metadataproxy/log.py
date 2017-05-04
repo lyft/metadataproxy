@@ -103,9 +103,8 @@ if BUGSNAG_API_KEY:
     import bugsnag
 
 if SENTRY_DSN:
-    from raven.conf import setup_logging
+    from raven.conf import setup_logging  # noqa
     from raven.handlers.logging import SentryHandler
-    assert setup_logging
 
 
 def _configure_error_handler():
