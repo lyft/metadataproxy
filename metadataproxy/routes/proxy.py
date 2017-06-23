@@ -27,10 +27,10 @@ def iam_role_info(api_version, junk=None):
     if not _supports_iam(api_version):
         return passthrough(request.path)
 
-    role_name_from_ip = roles.get_role_name_from_ip(request.remote_addr)
-    if role_name_from_ip:
-        log.debug('Providing IAM role info for {0}'.format(role_name_from_ip))
-        return jsonify(roles.get_role_info_from_ip(request.remote_addr))
+    role_params_from_ip = roles.get_role_params_from_ip(request.remote_addr)
+    if role_params_from_ip['name']:
+        log.debug('Providing IAM role info for {0}'.format(role_params_from_ip['name']))
+        return jsonify(roles.get_role_info_from_params(role_params_from_ip))
     else:
         log.error('Role name not found; returning 404.')
         return '', 404
@@ -41,9 +41,9 @@ def iam_role_name(api_version):
     if not _supports_iam(api_version):
         return passthrough(request.path)
 
-    role_name_from_ip = roles.get_role_name_from_ip(request.remote_addr)
-    if role_name_from_ip:
-        return role_name_from_ip
+    role_params_from_ip = roles.get_role_params_from_ip(request.remote_addr)
+    if role_params_from_ip['name']:
+        return role_params_from_ip['name']
     else:
         log.error('Role name not found; returning 404.')
         return '', 404
@@ -56,17 +56,19 @@ def iam_sts_credentials(api_version, requested_role, junk=None):
     if not _supports_iam(api_version):
         return passthrough(request.path)
 
-    if not roles.check_role_name_from_ip(request.remote_addr, requested_role):
+    try:
+        role_params = roles.get_role_params_from_ip(
+            request.remote_addr,
+            requested_role=requested_role
+        )
+    except roles.UnexpectedRoleError:
         msg = "Role name {0} doesn't match expected role for container"
         log.error(msg.format(requested_role))
         return '', 404
-    role_name = roles.get_role_name_from_ip(
-        request.remote_addr,
-        stripped=False
-    )
-    log.debug('Providing assumed role credentials for {0}'.format(role_name))
+
+    log.debug('Providing assumed role credentials for {0}'.format(role_params['name']))
     assumed_role = roles.get_assumed_role_credentials(
-        requested_role=role_name,
+        role_params=role_params,
         api_version=api_version
     )
     return jsonify(assumed_role)

@@ -56,30 +56,45 @@ STS-attained credentials are cached and automatically rotated as they expire.
 To specify the role of a container, simply launch it with the `IAM_ROLE`
 environment variable set to the IAM role you wish the container to run with.
 
+If the trust policy for the role requires an ExternalId, you can set this
+using the `IAM_EXTERNAL_ID` environment variable. This is most frequently
+used with cross-account role access scenarios. For more information on
+when you should use an External ID for your roles, see:
+
+http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user_externalid.html
+
 ```shell
 docker run -e IAM_ROLE=my-role ubuntu:14.04
+docker run -e IAM_ROLE=their-role@another-account -e IAM_EXTERNAL_ID=random-unique-string ubuntu:14.04
 ```
+
+#### Configurable Behavior
+
+There are a number of environment variables that can be set to tune
+metadata proxy's behavior. They can either be exported by the start
+script, or set via docker environment variables.
+
+| Variable | Type | Default | Description |
+| -------- | ---- | ------- | ----------- |
+| **DEFAULT\_ROLE** | String | | Role to use if IAM\_ROLE is not set in a container's environment. If unset the container will get no IAM credentials. |
+| **DEFAULT\_ACCOUNT\_ID** | String | | The default account ID to assume roles in, if IAM\_ROLE does not contain account information. If unset, metadataproxy will attempt to lookup role ARNs using iam:GetRole. |
+| **ROLE\_SESSION\_KEY** | String | | Optional key in container labels or environment variables to use for role session name. Prefix with `Labels:` or `Env:` respectively to indicate where key should be found. Useful to pass through metadata such as a CI job ID or launching user for audit purposes, as the role session name is included in the ARN that appears in access logs. |
+| DEBUG | Boolean | False | Enable debug mode. You should not do this in production as it will leak IAM credentials into your logs |
+| DOCKER\_URL | String | unix://var/run/docker.sock | Url of the docker daemon. The default is to access docker via its socket. |
+| METADATA\_URL | String | http://169.254.169.254 | URL of the metadata service. Default is the normal location of the metadata service in AWS. |
+| MOCK\_API | Boolean | False | Whether or not to mock all metadata endpoints. If True, mocked data will be returned to callers. If False, all endpoints except for IAM endpoints will be proxied through to the real metadata service. |
+| MOCKED\_INSTANCE\_ID | String | mockedid | When mocking the API, use the following instance id in returned data. |
+| AWS\_ACCOUNT\_MAP | JSON String | `{}` | A mapping of account names to account IDs. This allows you to use user-friendly names instead of account IDs in IAM\_ROLE environment variable values. |
+| ROLE\_MAPPING\_FILE | Path String | | A json file that has a dict mapping of IP addresses to role names. Can be used if docker networking has been disabled and you are managing IP addressing for containers through another process. |
+| ROLE\_REVERSE\_LOOKUP | Boolean | False | Enable performing a reverse lookup of incoming IP addresses to match containers by hostname. Useful if you've disabled networking in docker, but set hostnames for containers in /etc/hosts or DNS. |
+| HOSTNAME\_MATCH\_REGEX | Regex String | `^.*$` | Limit reverse lookup container matching to hostnames that match the specified pattern. |
 
 #### Default Roles
 
 When no role is matched, `metadataproxy` will use the role specified in the 
-`DEFAULT_ROLE` `metadataproxy` environment variable. If no DEFAULT_ROLE is
-specified as a fallback, then your docker container without an `IAM_ROLE`
+`DEFAULT\_ROLE` `metadataproxy` environment variable. If no DEFAULT\_ROLE is
+specified as a fallback, then your docker container without an `IAM\_ROLE`
 environment variable will fail to retrieve credentials.
-
-The `DEFAULT_ROLE` environment variable can be specified locally:
-
-```shell
-export DEFAULT_ROLE=my-default-role
-```
-
-Or can be specified via docker env:
-
-```shell
-docker run \
-       -e DEFAULT_ROLE=my-default-role \
-       ...
-```
 
 #### Role Formats
 
@@ -207,7 +222,7 @@ LOCAL_IPV4=$(curl http://169.254.169.254/latest/meta-data/local-ipv4)
 
 ## Run metadataproxy without docker
 
-In the following we assume _my\_config_ is a bash file with exports for all of
+In the following we assume \_my\_config\_ is a bash file with exports for all of
 the necessary settings discussed in the configuration section.
 
 ```

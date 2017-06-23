@@ -1,3 +1,10 @@
+## 1.4.0
+
+* Add IAM\_EXTERNAL\_ID variable: if found value will be populated into ExternalId parameter when making AssumeRole call.
+* add ROLE\_SESSION\_KEY variable: if found will use value to look up key from Docker container labels or environment variable to set RoleSessionName when making AssumeRole call. See documentation for details.
+* Reduce number of calls to Docker API when retrieving credentials.
+* Bump WSGI dependency versions
+
 ## 1.3.2
 
 * Packaging fixes for travis releases to docker hub

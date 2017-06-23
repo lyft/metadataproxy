@@ -9,7 +9,6 @@ from flask import jsonify
 from metadataproxy import app
 from metadataproxy import log
 from metadataproxy import roles
-from metadataproxy.roles import GetRoleError
 
 
 @app.route(
@@ -111,10 +110,10 @@ def get_iam_slash(api_version):
 @app.route('/<api_version>/meta-data/iam/info', strict_slashes=False)
 @app.route('/<api_version>/meta-data/iam/info/<path:junk>')
 def get_iam_info(api_version, junk=None):
-    role_name_from_ip = roles.get_role_name_from_ip(request.remote_addr)
-    if role_name_from_ip:
-        log.debug('Providing IAM role info for {0}'.format(role_name_from_ip))
-        return jsonify(roles.get_role_info_from_ip(request.remote_addr))
+    role_params_from_ip = roles.get_role_params_from_ip(request.remote_addr)
+    if role_params_from_ip['name']:
+        log.debug('Providing IAM role info for {0}'.format(role_params_from_ip['name']))
+        return jsonify(roles.get_role_info_from_params(role_params_from_ip))
     else:
         log.error('Role name not found; returning 404.')
         return '', 404
@@ -130,10 +129,10 @@ def get_security_credentials_noslash(api_version):
 
 @app.route('/<api_version>/meta-data/iam/security-credentials/')
 def get_security_credentials_slash(api_version):
-    role_name = roles.get_role_name_from_ip(request.remote_addr)
-    if role_name is None:
+    role_params = roles.get_role_params_from_ip(request.remote_addr)
+    if not role_params['name']:
         return '', 404
-    return role_name, 200
+    return role_params['name'], 200
 
 
 @app.route(
@@ -146,18 +145,20 @@ def get_security_credentials_slash(api_version):
     methods=['GET']
 )
 def get_role_credentials(api_version, requested_role, junk=None):
-    if not roles.check_role_name_from_ip(request.remote_addr, requested_role):
+    try:
+        role_params = roles.get_role_params_from_ip(
+            request.remote_addr,
+            requested_role=requested_role
+        )
+    except roles.UnexpectedRoleError:
         return '', 403
-    role_name = roles.get_role_name_from_ip(
-        request.remote_addr,
-        stripped=False
-    )
+
     try:
         assumed_role = roles.get_assumed_role_credentials(
-            requested_role=role_name,
+            role_params=role_params,
             api_version=api_version
         )
-    except GetRoleError as e:
+    except roles.GetRoleError as e:
         return '', e.args[0][0]
     return jsonify(assumed_role)
 

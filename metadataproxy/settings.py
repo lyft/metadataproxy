@@ -55,7 +55,7 @@ def str_env(var_name, default=''):
 
 PORT = int_env('PORT', 45001)
 HOST = str_env('HOST', '0.0.0.0')
-DEBUG = bool_env('DEBUG', True)
+DEBUG = bool_env('DEBUG', False)
 
 # Url of the docker daemon. The default is to access docker via its socket.
 DOCKER_URL = str_env('DOCKER_URL', 'unix://var/run/docker.sock')
@@ -98,3 +98,6 @@ ROLE_REVERSE_LOOKUP = bool_env('ROLE_REVERSE_LOOKUP', False)
 # Limit reverse lookup container matching to hostnames that match the specified
 # pattern.
 HOSTNAME_MATCH_REGEX = str_env('HOSTNAME_MATCH_REGEX', '^.*$')
+# Optional key in container labels or environment variables to use for role session name.
+# Prefix with Labels: or Env: respectively to indicate where key should be found.
+ROLE_SESSION_KEY = str_env('ROLE_SESSION_KEY')

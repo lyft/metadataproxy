@@ -96,7 +96,7 @@ def find_container(ip):
             if container['State']['Running']:
                 return container
             else:
-                log.error('Container id {0} is no longger running'.format(ip))
+                log.error('Container id {0} is no longer running'.format(ip))
                 del CONTAINER_MAPPING[ip]
         except docker.errors.NotFound:
             msg = 'Container id {0} no longer mapped to {1}'
@@ -157,75 +157,101 @@ def find_container(ip):
     return None
 
 
-def check_role_name_from_ip(ip, requested_role):
-    role_name = get_role_name_from_ip(ip)
-    if role_name == requested_role:
-        log.debug('Detected Role: {0}, Requested Role: {1}'.format(
-            role_name, requested_role
-        ))
-        return True
-    return False
-
-
 @log_exec_time
-def get_role_name_from_ip(ip, stripped=True):
+def get_role_params_from_ip(ip, requested_role=None):
+    params = {'name': None, 'account_id': None, 'external_id': None, 'session_name': None}
+    role_name = None
     if app.config['ROLE_MAPPING_FILE']:
-        return ROLE_MAPPINGS.get(ip, app.config['DEFAULT_ROLE'])
-    container = find_container(ip)
-    if container:
-        env = container['Config']['Env']
-        for e in env:
-            key, val = e.split('=', 1)
-            if key == 'IAM_ROLE':
-                if val.startswith('arn:aws'):
-                    m = RE_IAM_ARN.match(val)
-                    val = '{0}@{1}'.format(m.group(2), m.group(1))
-                if stripped:
-                    return val.split('@')[0]
-                else:
-                    return val
-        msg = "Couldn't find IAM_ROLE variable. Returning DEFAULT_ROLE: {0}"
-        log.debug(msg.format(app.config['DEFAULT_ROLE']))
-        if stripped:
-            return app.config['DEFAULT_ROLE'].split('@')[0]
+        role = ROLE_MAPPINGS.get(ip, app.config['DEFAULT_ROLE'])
+        if isinstance(role, dict):
+            params.update(role)
         else:
-            return app.config['DEFAULT_ROLE']
+            role_name = role
     else:
-        return None
+        container = find_container(ip)
+        if container:
+            env = container['Config']['Env'] or []
+            # Look up IAM_ROLE and IAM_EXTERNAL_ID values from environment
+            for e in env:
+                key, val = e.split('=', 1)
+                if key == 'IAM_ROLE':
+                    if val.startswith('arn:aws'):
+                        m = RE_IAM_ARN.match(val)
+                        val = '{0}@{1}'.format(m.group(2), m.group(1))
+                    role_name = val
+                elif key == 'IAM_EXTERNAL_ID':
+                    params['external_id'] = val
+            if not role_name:
+                msg = "Couldn't find IAM_ROLE variable. Returning DEFAULT_ROLE: {0}"
+                log.debug(msg.format(app.config['DEFAULT_ROLE']))
+                role_name = app.config['DEFAULT_ROLE']
+
+            # Optionally, look up role session name from environment or labels
+            if app.config['ROLE_SESSION_KEY']:
+                skey = app.config['ROLE_SESSION_KEY']
+                sval = None
+                if skey.startswith('Env:'):
+                    skey = skey[4:]
+                    for e in env:
+                        key, val = e.split('=', 1)
+                        if skey == key:
+                            sval = val
+                elif skey.startswith('Labels:'):
+                    skey = skey[7:]
+                    if container['Config']['Labels'] and skey in container['Config']['Labels']:
+                        sval = container['Config']['Label'][skey]
+                if sval and len(sval) > 1:
+                    # The docs on RoleSessionName are slightly contradictory, and state:
+                    # > The regex used to validate this parameter is a string of characters consisting
+                    # > of upper- and lower-case alphanumeric characters with no spaces. You can also
+                    # > include underscores or any of the following characters: =,.@-
+                    # > Type: String
+                    # > Length Constraints: Minimum length of 2. Maximum length of 64.
+                    # > Pattern: [\w+=,.@-]*
+                    # We replace any invalid chars with underscore, and trim to 64.
+                    params['session_name'] = re.sub(r'[^\w+=,.@-]', '_', sval)[:64]
+    if role_name:
+        role_parts = role_name.split('@')
+        params['name'] = role_parts[0]
+        if len(role_parts) > 1:
+            params['account_id'] = role_parts[1]
+
+    if requested_role and requested_role != params['name']:
+        raise UnexpectedRoleError
+
+    return params
 
 
 @log_exec_time
-def get_role_info_from_ip(ip):
-    role_name = get_role_name_from_ip(ip, stripped=False)
-    if not role_name:
+def get_role_info_from_params(role_params):
+    if not role_params['name']:
         return {}
     try:
-        role = get_assumed_role(role_name)
+        role = get_assumed_role(role_params)
     except GetRoleError:
         return {}
     time_format = "%Y-%m-%dT%H:%M:%SZ"
-    now = datetime.datetime.now(dateutil.tz.tzutc())
+    expiration = role['Credentials']['Expiration']
+    updated = expiration - datetime.timedelta(minutes=60)
     return {
         'Code': 'Success',
-        # TODO: This is probably not the right thing to return here.
-        'LastUpdated': now.strftime(time_format),
+        'LastUpdated': updated.strftime(time_format),
         'InstanceProfileArn': role['AssumedRoleUser']['Arn'],
         'InstanceProfileId': role['AssumedRoleUser']['AssumedRoleId']
     }
 
 
-def get_role_arn(role_name):
-    # Role name is an arn. Just return it.
-    if role_name.startswith('arn:aws'):
-        return role_name
-    # Role name includes an account name/id, split them
-    if '@' in role_name:
-        assume_role, account_name = role_name.split('@')
-    # No role name/id, try to get the default account id
+def get_role_arn(role_params):
+    if role_params['account_id']:
+        # Try to map the name to an account ID. If it isn't found, assume an ID was passed
+        # in and use it as-is.
+        role_params['account_id'] = app.config['AWS_ACCOUNT_MAP'].get(
+            role_params['account_id'],
+            role_params['account_id']
+        )
     else:
-        assume_role = role_name
         if app.config['DEFAULT_ACCOUNT_ID']:
-            account_name = app.config['DEFAULT_ACCOUNT_ID']
+            role_params['account_id'] = app.config['DEFAULT_ACCOUNT_ID']
         # No default account id defined. Get the ARN by looking up the role
         # name. This is a backwards compat use-case for when we didn't require
         # the default account id.
@@ -233,41 +259,39 @@ def get_role_arn(role_name):
             iam = iam_client()
             try:
                 with PrintingBlockTimer('iam.get_role'):
-                    role = iam.get_role(RoleName=role_name)
+                    role = iam.get_role(RoleName=role_params['name'])
                     return role['Role']['Arn']
             except ClientError as e:
                 response = e.response['ResponseMetadata']
                 raise GetRoleError((response['HTTPStatusCode'], e.message))
-    # Map the name to an account ID. If it isn't found, assume an ID was passed
-    # in and use that.
-    account_id = app.config['AWS_ACCOUNT_MAP'].get(account_name, account_name)
     # Return a generated ARN
-    return 'arn:aws:iam::{0}:role/{1}'.format(account_id, assume_role)
+    return 'arn:aws:iam::{account_id}:role/{name}'.format(**role_params)
 
 
 @log_exec_time
-def get_assumed_role(requested_role):
-    if requested_role in ROLES:
-        assumed_role = ROLES[requested_role]
+def get_assumed_role(role_params):
+    arn = get_role_arn(role_params)
+    if arn in ROLES:
+        assumed_role = ROLES[arn]
         expiration = assumed_role['Credentials']['Expiration']
         now = datetime.datetime.now(dateutil.tz.tzutc())
         expire_check = now + datetime.timedelta(minutes=5)
         if expire_check < expiration:
             return assumed_role
-    arn = get_role_arn(requested_role)
     with PrintingBlockTimer('sts.assume_role'):
         sts = sts_client()
-        assumed_role = sts.assume_role(
-            RoleArn=arn,
-            RoleSessionName='devproxyauth'
-        )
-    ROLES[requested_role] = assumed_role
+        session_name = role_params['session_name'] or 'devproxyauth'
+        kwargs = {'RoleArn': arn, 'RoleSessionName': session_name}
+        if role_params['external_id']:
+            kwargs['ExternalId'] = role_params['external_id']
+        assumed_role = sts.assume_role(**kwargs)
+    ROLES[arn] = assumed_role
     return assumed_role
 
 
 @log_exec_time
-def get_assumed_role_credentials(requested_role, api_version='latest'):
-    assumed_role = get_assumed_role(requested_role)
+def get_assumed_role_credentials(role_params, api_version='latest'):
+    assumed_role = get_assumed_role(role_params)
     time_format = "%Y-%m-%dT%H:%M:%SZ"
     credentials = assumed_role['Credentials']
     expiration = credentials['Expiration']
@@ -284,4 +308,8 @@ def get_assumed_role_credentials(requested_role, api_version='latest'):
 
 
 class GetRoleError(Exception):
+    pass
+
+
+class UnexpectedRoleError(Exception):
     pass
