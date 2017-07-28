@@ -139,7 +139,6 @@ def find_container(ip):
                     CONTAINER_MAPPING[ip] = _id
                     return c
         # Not Found ? Let's see if we are running under rancher 1.2+,which uses a label to store the IP
-        _labels = dict(c['Config']['Labels'])
         try:
             _labels = c.get('Config', {}).get('Labels', {})
         except (KeyError, ValueError):
@@ -147,6 +146,7 @@ def find_container(ip):
         try:
             if _labels.get('io.rancher.container.ip'):
                 ip = _labels.get('io.rancher.container.ip').split("/")[0]
+                print(ip)
         except docker.errors.NotFound:
             log.error('Container: {0} Label container.ip not found'.format(_id))
         if ip == _ip:
