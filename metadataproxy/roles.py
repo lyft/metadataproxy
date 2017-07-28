@@ -28,6 +28,8 @@ if app.config['ROLE_MAPPING_FILE']:
 else:
     ROLE_MAPPINGS = {}
 
+RE_IAM_ARN = re.compile(r"arn:aws:iam::(\d+):role/(.*)")
+
 
 class BlockTimer(object):
     def __enter__(self):
@@ -127,13 +129,26 @@ def find_container(ip):
             log.debug(msg.format(_id, ip))
             CONTAINER_MAPPING[ip] = _id
             return c
-        #Not Found ? Let's see if we are running under rancher 1.2+,which uses a label to store the IP
+        # Try matching container to caller by sub network IP address
+        _networks = c['NetworkSettings']['Networks']
+        if _networks:
+            for _network in _networks:
+                if _networks[_network]['IPAddress'] == ip:
+                    msg = 'Container id {0} mapped to {1} by sub-network IP match'
+                    log.debug(msg.format(_id, ip))
+                    CONTAINER_MAPPING[ip] = _id
+                    return c
+        # Not Found ? Let's see if we are running under rancher 1.2+,which uses a label to store the IP
         _labels = dict(c['Config']['Labels'])
         try:
-            if _labels.get('io.rancher.container.ip') is not None:
-               _ip=_labels.get('io.rancher.container.ip').split("/")[0]
+            _labels = c.get('Config', {}).get('Labels', {})
+        except (KeyError, ValueError):
+            _labels = {}
+        try:
+            if _labels.get('io.rancher.container.ip'):
+                ip = _labels.get('io.rancher.container.ip').split("/")[0]
         except docker.errors.NotFound:
-            log.error ('Container: {0} Label container.ip not found'.format(_id))
+            log.error('Container: {0} Label container.ip not found'.format(_id))
         if ip == _ip:
             msg = 'Container id {0} mapped to {1} by Rancher IP match'
             log.debug(msg.format(_id, ip))
@@ -162,6 +177,9 @@ def find_container(ip):
 def check_role_name_from_ip(ip, requested_role):
     role_name = get_role_name_from_ip(ip)
     if role_name == requested_role:
+        log.debug('Detected Role: {0}, Requested Role: {1}'.format(
+            role_name, requested_role
+        ))
         return True
     return False
 
@@ -176,6 +194,9 @@ def get_role_name_from_ip(ip, stripped=True):
         for e in env:
             key, val = e.split('=', 1)
             if key == 'IAM_ROLE':
+                if val.startswith('arn:aws'):
+                    m = RE_IAM_ARN.match(val)
+                    val = '{0}@{1}'.format(m.group(2), m.group(1))
                 if stripped:
                     return val.split('@')[0]
                 else:
