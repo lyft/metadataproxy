@@ -46,18 +46,62 @@ credentials before the service is started.
 For IAM routes, the metadataproxy will use STS to assume roles for containers.
 To do so it takes the incoming IP address of metadata requests and finds the
 running docker container associated with the IP address. It uses the value of
-the container's IAM_ROLE environment variable as the role it will assume. It
+the container's `IAM_ROLE` environment variable as the role it will assume. It
 then assumes the role and gives back STS credentials in the metadata response.
 
-So, to specify the role of a container, simply launch it with the IAM_ROLE
+STS-attained credentials are cached and automatically rotated as they expire.
+
+#### Container-specific roles
+
+To specify the role of a container, simply launch it with the `IAM_ROLE`
 environment variable set to the IAM role you wish the container to run with.
 
-If you'd like containers to fallback to a default role if no role is specified,
-you can use the following configuration option:
-
+```shell
+docker run -e IAM_ROLE=my-role ubuntu:14.04
 ```
+
+#### Default Roles
+
+When no role is matched, `metadataproxy` will use the role specified in the 
+`DEFAULT_ROLE` `metadataproxy` environment variable. If no DEFAULT_ROLE is
+specified as a fallback, then your docker container without an `IAM_ROLE`
+environment variable will fail to retrieve credentials.
+
+The `DEFAULT_ROLE` environment variable can be specified locally:
+
+```shell
 export DEFAULT_ROLE=my-default-role
 ```
+
+Or can be specified via docker env:
+
+```shell
+docker run \
+       -e DEFAULT_ROLE=my-default-role \
+       ...
+```
+
+#### Role Formats
+
+The following are all supported formats for specifying roles:
+
+- By Role:
+
+    ```shell
+    IAM_ROLE=my-role
+    ```
+
+- By Role@AccountId
+
+    ```shell
+    IAM_ROLE=my-role@012345678910
+    ```
+
+- By ARN:
+
+    ```shell
+    IAM_ROLE=arn:aws:iam::012345678910:role/my-role
+    ```
 
 ### Role structure
 
@@ -91,6 +135,24 @@ structure:
 
 4. Now customize `ContainerRole1` & friends as you like
 
+Note: The `ContainerRole1` role should have a trust relationship that allows it to be assumed by the `user` which is associated to the host machine running the `sts:AssumeRole` command.  An example trust relationship for `ContainRole1` may look like:
+
+```
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::012345678901:root",
+        "Service": "ec2.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+```
+
 ### Routing container traffic to metadataproxy
 
 Using iptables, we can forward traffic meant to 169.254.169.254 from docker0 to
@@ -101,10 +163,10 @@ the host, and not in a container:
 /sbin/iptables \
   --append PREROUTING \
   --destination 169.254.169.254 \
+  --protocol tcp \
   --dport 80 \
   --in-interface docker0 \
   --jump DNAT \
-  --protocol tcp \
   --table nat \
   --to-destination 127.0.0.1:8000 \
   --wait
@@ -125,17 +187,17 @@ LOCAL_IPV4=$(curl http://169.254.169.254/latest/meta-data/local-ipv4)
 /sbin/iptables \
   --append PREROUTING \
   --destination 169.254.169.254 \
+  --protocol tcp \
   --dport 80 \
   --in-interface docker0 \
   --jump DNAT \
-  --protocol tcp \
   --table nat \
   --to-destination $LOCAL_IPV4:8000 \
   --wait
 
-/sbin/iptables
+/sbin/iptables \
   --wait \
-  --insert INPUT 1
+  --insert INPUT 1 \
   --protocol tcp \
   --dport 80 \
   \! \
@@ -163,6 +225,30 @@ You can build one with the included Dockerfile.  To run, do something like:
 docker run --net=host \
     -v /var/run/docker.sock:/var/run/docker.sock \
     metadataproxy
+```
+
+### gunicorn settings
+
+The following environment variables can be set to configure gunicorn (defaults
+are set in the examples):
+
+```
+# Change the IP address the gunicorn worker is listening on. You likely want to
+# leave this as the default
+HOST=0.0.0.0
+
+# Change the port the gunicorn worker is listening on.
+PORT=8000
+
+# Change the number of worker processes gunicorn will run with. The default is
+# 1, which is likely enough since metadataproxy is using gevent and its work is
+# completely IO bound. Increasing the number of workers will likely make your
+# in-memory cache less efficient
+WORKERS=1
+
+# Enable debug mode (you should not do this in production as it will leak IAM
+# credentials into your logs)
+DEBUG=False
 ```
 
 ## Contributing

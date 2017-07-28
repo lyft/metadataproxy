@@ -1,18 +1,17 @@
-sudo: required
-services:
-  - docker
-
 language: python
 python:
   - "2.7"
-# command to install dependencies
+env:
+  - REPO=lyft/metadataproxy
+sudo: required
+services:
+  - docker
+before_install:
+  - docker build -f Dockerfile -t $REPO:$TRAVIS_COMMIT .
 install: "pip install -r requirements.txt"
-# command to run tests
 script: make test
-
 after_success:
   - ./docker_push.sh
-
 deploy:
   provider: pypi
   user: lyftpypi

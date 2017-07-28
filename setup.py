@@ -12,17 +12,23 @@
 # limitations under the License.
 
 from setuptools import setup, find_packages
-from pip.req import parse_requirements
 
-reqs_base = parse_requirements("requirements.txt", session=False)
-reqs_wsgi = parse_requirements("requirements_wsgi.txt", session=False)
-reqs = [str(ir.req) for ir in reqs_base]
-reqs = reqs + [str(ir.req) for ir in reqs_wsgi]
+with open('requirements.txt') as f:
+    reqs_base = f.read().splitlines()
+    reqs_base = [r for r in reqs_base if not r.startswith('#') and r]
+
+with open('requirements_wsgi.txt') as f:
+    reqs_wsgi = f.read().splitlines()
+    reqs_wsgi = [r for r in reqs_wsgi if not r.startswith('#') and r]
+
+reqs = reqs_base + reqs_wsgi
 
 setup(
     name="metadataproxy",
-    version="1.1.4",
+    version="1.3.1",
     packages=find_packages(exclude=["test*"]),
+    include_package_data=True,
+    zip_safe=False,
     install_requires=reqs,
     author="Ryan Lane",
     author_email="rlane@lyft.com",

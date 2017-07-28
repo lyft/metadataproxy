@@ -24,3 +24,12 @@ tests:
   - name: startup
     type: startup
     group: metadataproxy.dev
+deploy:
+  - name: development
+    legacy: False
+  - name: staging
+    legacy: False
+  - name: canary
+    legacy: False
+  - name: production
+    legacy: False
