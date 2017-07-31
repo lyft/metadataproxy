@@ -145,8 +145,7 @@ def find_container(ip):
             _labels = {}
         try:
             if _labels.get('io.rancher.container.ip'):
-                ip = _labels.get('io.rancher.container.ip').split("/")[0]
-                print(ip)
+                _ip = _labels.get('io.rancher.container.ip').split("/")[0]
         except docker.errors.NotFound:
             log.error('Container: {0} Label container.ip not found'.format(_id))
         if ip == _ip:
@@ -154,7 +153,6 @@ def find_container(ip):
             log.debug(msg.format(_id, ip))
             CONTAINER_MAPPING[ip] = _id
             return c
-
         # Try matching container to caller by hostname match
         if app.config['ROLE_REVERSE_LOOKUP']:
             hostname = c['Config']['Hostname']
