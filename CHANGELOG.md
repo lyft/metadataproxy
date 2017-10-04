@@ -1,3 +1,7 @@
+## 1.5.1
+
+* Fix 500 error when retrieving role session name from Docker label
+
 ## 1.5.0
 
 * New support retrieving container IP from Rancher labels

@@ -214,7 +214,7 @@ def get_role_params_from_ip(ip, requested_role=None):
                 elif skey.startswith('Labels:'):
                     skey = skey[7:]
                     if container['Config']['Labels'] and skey in container['Config']['Labels']:
-                        sval = container['Config']['Label'][skey]
+                        sval = container['Config']['Labels'][skey]
                 if sval and len(sval) > 1:
                     # The docs on RoleSessionName are slightly contradictory, and state:
                     # > The regex used to validate this parameter is a string of characters consisting
