@@ -53,7 +53,7 @@ def str_env(var_name, default=''):
     return getenv(var_name, default)
 
 
-PORT = int_env('PORT', 4501)
+PORT = int_env('PORT', 45001)
 HOST = str_env('HOST', '0.0.0.0')
 DEBUG = bool_env('DEBUG', False)
 
