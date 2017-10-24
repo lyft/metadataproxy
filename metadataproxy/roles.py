@@ -61,9 +61,9 @@ def log_exec_time(method):
     return timed
 
 
-def docker_client():
+def docker_client(force=False):
     global _docker_client
-    if _docker_client is None:
+    if force or _docker_client is None:
         _docker_client = docker.Client(base_url=app.config['DOCKER_URL'])
     return _docker_client
 
@@ -91,7 +91,12 @@ def find_container(ip):
         log.info('Container id for IP {0} in cache'.format(ip))
         try:
             with PrintingBlockTimer('Container inspect'):
-                container = client.inspect_container(CONTAINER_MAPPING[ip])
+                try:
+                    container = client.inspect_container(CONTAINER_MAPPING[ip])
+                except requests.ConnectionError:
+                    log.error('Docker client connection error. Retrying connection.')
+                    client = docker_client(True)
+                    container = client.inspect_container(CONTAINER_MAPPING[ip])
             # Only return a cached container if it is running.
             if container['State']['Running']:
                 return container
