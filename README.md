@@ -1,6 +1,6 @@
 # metadataproxy
 
-The metadataproxy is used to allow containers to acquire IAM roles.
+The metadataproxy is used to allow containers to acquire IAM roles. By metadata we mean [EC2 instance meta data](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html) which is normally available to EC2 instances in an ASG. This proxy exposes said meta data for use by containers on hosts outside of EC2.
 
 ## Installation
 
