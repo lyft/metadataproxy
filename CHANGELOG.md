@@ -1,3 +1,7 @@
+## 1.5.2
+
+* Prevent possibility of race condition during docker inspect
+
 ## 1.5.1
 
 * Fix 500 error when retrieving role session name from Docker label
