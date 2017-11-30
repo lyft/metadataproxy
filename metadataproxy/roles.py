@@ -87,21 +87,24 @@ def find_container(ip):
     pattern = re.compile(app.config['HOSTNAME_MATCH_REGEX'])
     client = docker_client()
     # Try looking at the container mapping cache first
-    if ip in CONTAINER_MAPPING:
+    container_id = CONTAINER_MAPPING.get(ip)
+    if container_id:
         log.info('Container id for IP {0} in cache'.format(ip))
         try:
             with PrintingBlockTimer('Container inspect'):
-                container = client.inspect_container(CONTAINER_MAPPING[ip])
+                container = client.inspect_container(container_id)
             # Only return a cached container if it is running.
             if container['State']['Running']:
                 return container
             else:
                 log.error('Container id {0} is no longer running'.format(ip))
-                del CONTAINER_MAPPING[ip]
+                if ip in CONTAINER_MAPPING:
+                    del CONTAINER_MAPPING[ip]
         except docker.errors.NotFound:
             msg = 'Container id {0} no longer mapped to {1}'
-            log.error(msg.format(CONTAINER_MAPPING[ip], ip))
-            del CONTAINER_MAPPING[ip]
+            log.error(msg.format(container_id, ip))
+            if ip in CONTAINER_MAPPING:
+                del CONTAINER_MAPPING[ip]
 
     _fqdn = None
     with PrintingBlockTimer('Reverse DNS'):
