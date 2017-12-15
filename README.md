@@ -80,7 +80,7 @@ script, or set via docker environment variables.
 | **DEFAULT\_ACCOUNT\_ID** | String | | The default account ID to assume roles in, if IAM\_ROLE does not contain account information. If unset, metadataproxy will attempt to lookup role ARNs using iam:GetRole. |
 | **ROLE\_SESSION\_KEY** | String | | Optional key in container labels or environment variables to use for role session name. Prefix with `Labels:` or `Env:` respectively to indicate where key should be found. Useful to pass through metadata such as a CI job ID or launching user for audit purposes, as the role session name is included in the ARN that appears in access logs. |
 | DEBUG | Boolean | False | Enable debug mode. You should not do this in production as it will leak IAM credentials into your logs |
-| DOCKER\_URL | String | unix://var/run/docker.sock | Url of the docker daemon. The default is to access docker via its socket. |
+| DOCKER\_URL | String | unix://var/run/docker_sockets/docker.sock | Url of the docker daemon. The default is to access docker via its socket. |
 | METADATA\_URL | String | http://169.254.169.254 | URL of the metadata service. Default is the normal location of the metadata service in AWS. |
 | MOCK\_API | Boolean | False | Whether or not to mock all metadata endpoints. If True, mocked data will be returned to callers. If False, all endpoints except for IAM endpoints will be proxied through to the real metadata service. |
 | MOCKED\_INSTANCE\_ID | String | mockedid | When mocking the API, use the following instance id in returned data. |
@@ -238,7 +238,7 @@ For production purposes, you'll want to kick up a container to run.
 You can build one with the included Dockerfile.  To run, do something like:
 ```bash
 docker run --net=host \
-    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v /var/run/docker_sockets:/var/run/docker_sockets \
     lyft/metadataproxy
 ```
 
