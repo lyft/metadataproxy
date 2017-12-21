@@ -58,7 +58,7 @@ HOST = str_env('HOST', '0.0.0.0')
 DEBUG = bool_env('DEBUG', False)
 
 # Url of the docker daemon. The default is to access docker via its socket.
-DOCKER_URL = str_env('DOCKER_URL', 'unix://var/run/docker_sockets/docker.sock')
+DOCKER_URL = str_env('DOCKER_URL', 'unix://var/run/docker.sock')
 # URL of the metadata service. Default is the normal location of the
 # metadata service in AWS.
 METADATA_URL = str_env('METADATA_URL', 'http://169.254.169.254')
