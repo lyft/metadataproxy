@@ -3,3 +3,4 @@ RUN apt-get update -y && apt-get install -y iptables
 COPY requirements.txt /code/metadataproxy/requirements.txt
 RUN /code/containers/python/pip-installer /code/metadataproxy/requirements.txt
 COPY . /code/metadataproxy/
+ENV DOCKER_URL 'unix://var/run/docker_sockets/docker.sock'
