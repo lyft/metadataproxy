@@ -49,17 +49,16 @@ def iam_role_name(api_version):
         return '', 404
 
 
-@app.route('/<api_version>/meta-data/iam/security-credentials/<requested_role>',
+@app.route('/<api_version>/meta-data/iam/security-credentials/<path:requested_role>',
            strict_slashes=False)
-@app.route('/<api_version>/meta-data/iam/security-credentials/<requested_role>/<path:junk>')
-def iam_sts_credentials(api_version, requested_role, junk=None):
+def iam_sts_credentials(api_version, requested_role):
     if not _supports_iam(api_version):
         return passthrough(request.path)
 
     try:
         role_params = roles.get_role_params_from_ip(
             request.remote_addr,
-            requested_role=requested_role
+            requested_role=requested_role.rstrip('/')
         )
     except roles.UnexpectedRoleError:
         msg = "Role name {0} doesn't match expected role for container"

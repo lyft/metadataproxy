@@ -277,7 +277,11 @@ def get_role_arn(role_params):
             iam = iam_client()
             try:
                 with PrintingBlockTimer('iam.get_role'):
-                    role = iam.get_role(RoleName=role_params['name'])
+                    if '/' in role_params['name']:
+                        path, name = role_params['name'].rsplit('/', 1)
+                        role = iam.get_role(Path=path + '/', RoleName=name)
+                    else:
+                        role = iam.get_role(RoleName=role_params['name'])
                     return role['Role']['Arn']
             except ClientError as e:
                 response = e.response['ResponseMetadata']
