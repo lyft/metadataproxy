@@ -32,3 +32,7 @@ deploy:
     legacy: False
   - name: production
     legacy: False
+builder:
+  name: docker_build
+  params:
+    dockerfile: Dockerfile.private
