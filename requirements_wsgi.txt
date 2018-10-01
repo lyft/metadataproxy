@@ -1,14 +1,14 @@
 # License: MIT
 # Upstream url: http://gunicorn.org/
 # Use: For wsgi running
-gunicorn==19.7.1
+gunicorn==19.9.0
 
 # License: MIT
 # Upstream url: http://www.gevent.org/
 # Use: For concurrency
-gevent==1.2.2
+gevent==1.3.6
 
 # License: MIT
 # Upstream url: https://github.com/python-greenlet/greenlet
 # Use: For concurrency
-greenlet==0.4.12
+greenlet==0.4.15
