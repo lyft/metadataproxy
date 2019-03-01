@@ -92,8 +92,8 @@ script, or set via docker environment variables.
 #### Default Roles
 
 When no role is matched, `metadataproxy` will use the role specified in the 
-`DEFAULT\_ROLE` `metadataproxy` environment variable. If no DEFAULT\_ROLE is
-specified as a fallback, then your docker container without an `IAM\_ROLE`
+`DEFAULT_ROLE` `metadataproxy` environment variable. If no DEFAULT\_ROLE is
+specified as a fallback, then your docker container without an `IAM_ROLE`
 environment variable will fail to retrieve credentials.
 
 #### Role Formats
