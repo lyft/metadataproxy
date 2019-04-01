@@ -361,7 +361,7 @@ def get_placement_slash(api_version):
     return 'availability-zone', 200
 
 
-@app.route('/<api_version>/meta-data/availability-zone')
+@app.route('/<api_version>/meta-data/placement/availability-zone')
 def get_placement_az(api_version):
     return 'us-east-1a', 200
 
