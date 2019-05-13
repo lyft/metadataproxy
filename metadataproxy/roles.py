@@ -193,8 +193,8 @@ def get_role_params_from_ip(ip, requested_role=None):
             for e in env:
                 key, val = e.split('=', 1)
                 if key == 'IAM_ROLE':
-                    if val.startswith('arn:aws'):
-                        m = RE_IAM_ARN.match(val)
+                    m = RE_IAM_ARN.match(val)
+                    if m:
                         val = '{0}@{1}'.format(m.group(2), m.group(1))
                     role_name = val
                 elif key == 'IAM_EXTERNAL_ID':
