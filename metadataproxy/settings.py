@@ -101,3 +101,7 @@ HOSTNAME_MATCH_REGEX = str_env('HOSTNAME_MATCH_REGEX', '^.*$')
 # Optional key in container labels or environment variables to use for role session name.
 # Prefix with Labels: or Env: respectively to indicate where key should be found.
 ROLE_SESSION_KEY = str_env('ROLE_SESSION_KEY')
+# In case we also want to query the mesos state api
+MESOS_STATE_LOOKUP = bool_env('MESOS_STATE_LOOKUP', False)
+# URL of the mesos state endpoint to query
+MESOS_STATE_URL = str_env('MESOS_STATE_URL', 'http://localhost:5051/state')
