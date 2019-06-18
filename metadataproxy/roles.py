@@ -5,13 +5,14 @@ import json
 import socket
 import re
 import timeit
-import urllib2
+import requests
 
 # Import third party libs
 import boto3
 import docker
 import docker.errors
 from botocore.exceptions import ClientError
+from cachetools import cached, TTLCache
 
 # Import metadataproxy libs
 from metadataproxy import app
@@ -174,28 +175,44 @@ def find_container(ip):
         # Try to find the container over the mesos state api and use the labels attached to it
         # as a replacement for docker env and labels
         if app.config['MESOS_STATE_LOOKUP']:
-            try:
-                state = json.loads(urllib2.urlopen(app.config['MESOS_STATE_URL']).read())
-                for framework in state['frameworks']:
-                    for executor in framework['executors']:
-                        for task in executor['tasks']:
-                            for status in task['statuses']:
-                                if status['state'] == 'TASK_RUNNING':
-                                    for network in status['container_status']['network_infos']:
-                                        for ip_map in network['ip_addresses']:
-                                            if ip_map['ip_address'] == ip:
-                                                if 'labels' in task:
-                                                    labels = []
-                                                    for key, val in task['labels']:
-                                                        label = '{0}={1}'.format(key, val)
-                                                        labels.append(label)
-                                                        container = {'Config': {'Env': labels, 'Labels': labels}}
-                                                        return container
-
-            except urllib2.URLError:
-                log.error('Could not connect to the local mesos http api')
+            mesos_container = find_mesos_container(ip)
+            if mesos_container is not None:
+                return mesos_container
 
     log.error('No container found for ip {0}'.format(ip))
+    return None
+
+
+@cached(cache=TTLCache(maxsize=512, ttl=60))
+@log_exec_time
+def find_mesos_container(ip):
+    mesos_state_url = app.config['MESOS_STATE_URL']
+    try:
+        state = requests.get(mesos_state_url, timeout=2).json()
+        for framework in state['frameworks']:
+            for executor in framework['executors']:
+                for task in executor['tasks']:
+                    for status in task['statuses']:
+                        if status['state'] == 'TASK_RUNNING':
+                            for network in status['container_status']['network_infos']:
+                                for ip_map in network['ip_addresses']:
+                                    if ip_map['ip_address'] == ip:
+                                        if 'labels' in task:
+                                            env = []
+                                            for label in task['labels']:
+                                                key = label['key']
+                                                val = label['value']
+                                                env_var = '{0}={1}'.format(key, val)
+                                                env.append(env_var)
+                                            container = {'Config': {'Env': env, 'Labels': env}}
+                                            return container
+
+    except requests.exceptions.Timeout:
+        log.error('Timeout when trying to call the mesos http api: {0}'.format(mesos_state_url))
+    except requests.exceptions.RequestException:
+        log.exception('Error while trying to call the mesos http api: {0}'.format(mesos_state_url))
+    except KeyError:
+        log.exception('Error while trying to lookup the required keys in the json object')
     return None
 
 
