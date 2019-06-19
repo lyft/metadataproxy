@@ -105,3 +105,5 @@ ROLE_SESSION_KEY = str_env('ROLE_SESSION_KEY')
 MESOS_STATE_LOOKUP = bool_env('MESOS_STATE_LOOKUP', False)
 # URL of the mesos state endpoint to query
 MESOS_STATE_URL = str_env('MESOS_STATE_URL', 'http://localhost:5051/state')
+# Timeout to use when calling the mesos state endpoint
+MESOS_STATE_TIMEOUT = int_env('MESOS_STATE_TIMEOUT', 2)

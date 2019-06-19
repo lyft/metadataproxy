@@ -188,7 +188,7 @@ def find_container(ip):
 def find_mesos_container(ip):
     mesos_state_url = app.config['MESOS_STATE_URL']
     try:
-        state = requests.get(mesos_state_url, timeout=2).json()
+        state = requests.get(mesos_state_url, timeout=app.config['MESOS_STATE_TIMEOUT']).json()
         for framework in state['frameworks']:
             for executor in framework['executors']:
                 for task in executor['tasks']:
