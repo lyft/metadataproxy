@@ -216,6 +216,14 @@ def find_mesos_container(ip):
     return None
 
 
+def split_envvar(envvar):
+    """Splits str formatted as `key=val` into [key, val]
+
+    if string is missing an `=val` it will return [key, None]
+    """
+    return (envvar.split('=', 1) + [None])[:2]
+
+
 @log_exec_time
 def get_role_params_from_ip(ip, requested_role=None):
     params = {'name': None, 'account_id': None, 'external_id': None, 'session_name': None}
@@ -232,7 +240,7 @@ def get_role_params_from_ip(ip, requested_role=None):
             env = container['Config']['Env'] or []
             # Look up IAM_ROLE and IAM_EXTERNAL_ID values from environment
             for e in env:
-                key, val = e.split('=', 1)
+                key, val = split_envvar(e)
                 if key == 'IAM_ROLE':
                     m = RE_IAM_ARN.match(val)
                     if m:
@@ -252,7 +260,7 @@ def get_role_params_from_ip(ip, requested_role=None):
                 if skey.startswith('Env:'):
                     skey = skey[4:]
                     for e in env:
-                        key, val = e.split('=', 1)
+                        key, val = split_envvar(e)
                         if skey == key:
                             sval = val
                 elif skey.startswith('Labels:'):
