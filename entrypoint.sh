@@ -9,4 +9,4 @@ if [ ! -z "$DEVBOX" ]; then
   export RELOAD="true"
   export RELOAD_EXTRA_FILES="/root/.aws/credentials"
 fi
-exec gunicorn wsgi:app --bind 0.0.0.0:45001 -c /etc/gunicorn/gunicorn.conf --access-logfile -
+exec gunicorn wsgi:app --bind 0.0.0.0:45001 -c /etc/gunicorn/gunicorn.conf --access-logfile - --error-logfile - --log-file -

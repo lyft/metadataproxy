@@ -91,7 +91,7 @@ def find_container(ip):
     # Try looking at the container mapping cache first
     container_id = CONTAINER_MAPPING.get(ip)
     if container_id:
-        log.info('Container id for IP {0} in cache'.format(ip))
+        log.info('Container id for IP {0} in cache'.format(ip), extra={'test': 'me'})
         try:
             with PrintingBlockTimer('Container inspect'):
                 container = client.inspect_container(container_id)
