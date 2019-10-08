@@ -44,3 +44,8 @@ requests==2.22.0
 # License: MIT
 # Upstream url: https://github.com/tkem/cachetools
 cachetools==3.1.1
+
+# Json Formatter for the standard python logger
+# Licence: BSD
+# Upstream url: https://github.com/madzak/python-json-logger
+python-json-logger==0.1.11

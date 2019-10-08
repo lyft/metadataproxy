@@ -1,5 +1,9 @@
 #!/bin/sh -e
 
+if [ "z$GUNICORN_CONFIG" = "z" ]; then
+    GUNICORN_CONFIG="/etc/gunicorn/gunicorn.conf"
+fi
+
 if [ "z$HOST" = "z" ]; then
     HOST="0.0.0.0"
 fi
@@ -20,4 +24,4 @@ fi
 
 export PYTHONUNBUFFERED="true"
 
-/usr/local/bin/gunicorn metadataproxy:app --log-level $LEVEL --workers=$WORKERS -k gevent -b $HOST:$PORT --access-logfile - --error-logfile - --log-file -
+/usr/local/bin/gunicorn metadataproxy:app -c /etc/gunicorn/gunicorn.conf --log-level $LEVEL --workers=$WORKERS -k gevent -b $HOST:$PORT --access-logfile - --error-logfile - --log-file -
