@@ -5,8 +5,8 @@ RUN pip --no-cache-dir install -r /srv/metadataproxy/requirements.txt && \
     pip --no-cache-dir install -r /srv/metadataproxy/requirements_wsgi.txt
 
 RUN mkdir -p /etc/gunicorn /etc/metadataproxy
-COPY conf/gunicorn.conf /etc/gunicorn/gunicorn.conf
-COPY conf/logging.conf /etc/metadataproxy/logging.conf
+COPY config/gunicorn.conf /etc/gunicorn/gunicorn.conf
+COPY config/logging.conf /etc/metadataproxy/logging.conf
 
 EXPOSE 8000
 VOLUME ["/var/run/docker.sock"]

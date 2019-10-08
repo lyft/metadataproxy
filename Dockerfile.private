@@ -11,7 +11,7 @@ RUN : \
     && pip install -r/code/metadataproxy/requirements_wsgi.txt \
     && pip install -r/code/metadataproxy/requirements.txt
 RUN mkdir -p /etc/gunicorn /etc/metadataproxy
-COPY conf/gunicorn.conf /etc/gunicorn/gunicorn.conf
-COPY conf/logging.conf /etc/metadataproxy/logging.conf
+COPY config/gunicorn.conf /etc/gunicorn/gunicorn.conf
+COPY config/logging.conf /etc/metadataproxy/logging.conf
 COPY . /code/metadataproxy/
 ENV DOCKER_URL 'unix://var/run/docker_sockets/docker.sock'
