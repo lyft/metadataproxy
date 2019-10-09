@@ -8,7 +8,6 @@ from flask import url_for
 from flask import jsonify
 
 from metadataproxy import app
-from metadataproxy import log
 from metadataproxy import roles
 
 log = logging.getLogger(__name__)
