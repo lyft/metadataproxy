@@ -1,13 +1,15 @@
+import logging
+
+import requests
 from flask import Response
 from flask import request
 from flask import stream_with_context
 from flask import jsonify
 
-import requests
-
 from metadataproxy import app
-from metadataproxy import log
 from metadataproxy import roles
+
+log = logging.getLogger(__name__)
 
 
 def _supports_iam(version):

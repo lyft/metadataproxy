@@ -1,6 +1,7 @@
 # Import python libs
 import datetime
 import dateutil.tz
+import logging
 import json
 import socket
 import re
@@ -16,7 +17,8 @@ from cachetools import cached, TTLCache
 
 # Import metadataproxy libs
 from metadataproxy import app
-from metadataproxy import log
+
+log = logging.getLogger(__name__)
 
 ROLES = {}
 CONTAINER_MAPPING = {}

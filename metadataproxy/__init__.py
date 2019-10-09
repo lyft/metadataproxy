@@ -1,10 +1,6 @@
-import logging
-
 from flask import Flask
 
 from metadataproxy import settings
-
-log = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.config.from_object(settings)
