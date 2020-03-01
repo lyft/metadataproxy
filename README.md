@@ -85,6 +85,7 @@ script, or set via docker environment variables.
 | MOCK\_API | Boolean | False | Whether or not to mock all metadata endpoints. If True, mocked data will be returned to callers. If False, all endpoints except for IAM endpoints will be proxied through to the real metadata service. |
 | MOCKED\_INSTANCE\_ID | String | mockedid | When mocking the API, use the following instance id in returned data. |
 | AWS\_ACCOUNT\_MAP | JSON String | `{}` | A mapping of account names to account IDs. This allows you to use user-friendly names instead of account IDs in IAM\_ROLE environment variable values. |
+| ROLE\_EXPIRATION\_THRESHOLD | Integer | 15 | The threshold before credentials expire in minutes at which metadataproxy will attempt to load new credentials. |
 | ROLE\_MAPPING\_FILE | Path String | | A json file that has a dict mapping of IP addresses to role names. Can be used if docker networking has been disabled and you are managing IP addressing for containers through another process. |
 | ROLE\_REVERSE\_LOOKUP | Boolean | False | Enable performing a reverse lookup of incoming IP addresses to match containers by hostname. Useful if you've disabled networking in docker, but set hostnames for containers in /etc/hosts or DNS. |
 | HOSTNAME\_MATCH\_REGEX | Regex String | `^.*$` | Limit reverse lookup container matching to hostnames that match the specified pattern. |

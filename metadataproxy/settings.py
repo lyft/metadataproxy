@@ -87,6 +87,10 @@ DEFAULT_ACCOUNT_ID = str_env('DEFAULT_ACCOUNT_ID')
 #   account_id: 12345
 AWS_ACCOUNT_MAP = json.loads(str_env('AWS_ACCOUNT_MAP', '{}'))
 
+# The threshold before credentials expire in minutes at which metadataproxy will attempt
+# to load new credentials. The default in previous versions of metadataproxy was 5, but
+# we choose to make the new default 15 for better compatibility with aws-sdk-java.
+ROLE_EXPIRATION_THRESHOLD = int_env('ROLE_EXPIRATION_THRESHOLD', 15)
 # A json file that has a dict mapping of IP addresses to role names. Can be
 # used if docker networking has been disabled and you are managing IP
 # addressing for containers through another process.

@@ -348,7 +348,7 @@ def get_assumed_role(role_params):
         assumed_role = ROLES[arn]
         expiration = assumed_role['Credentials']['Expiration']
         now = datetime.datetime.now(dateutil.tz.tzutc())
-        expire_check = now + datetime.timedelta(minutes=5)
+        expire_check = now + datetime.timedelta(minutes=app.config['ROLE_EXPIRATION_THRESHOLD'])
         if expire_check < expiration:
             return assumed_role
     with PrintingBlockTimer('sts.assume_role'):
