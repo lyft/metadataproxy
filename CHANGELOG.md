@@ -1,3 +1,7 @@
+## 2.0.0
+
+* Though we don't expect this to be a breaking change, the default renewal time for IAM credentials has been changed from 5 minutes to 15 minutes, for better compatibility with aws-sdk-java. This time can be changed via the `ROLE_EXPIRATION_THRESHOLD` setting.
+
 ## 1.11.0
 
 * Added PyYAML, python-json-logger, and blinker dependencies

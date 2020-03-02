@@ -25,7 +25,7 @@ reqs = reqs_base + reqs_wsgi
 
 setup(
     name="metadataproxy",
-    version="1.11.0",
+    version="2.0.0",
     packages=find_packages(exclude=["test*"]),
     include_package_data=True,
     zip_safe=False,
