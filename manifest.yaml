@@ -11,7 +11,7 @@ containers:
     mounts:
       - /var/run/docker_sockets
     start_phase: sequential_init
-    privileged: True
+    privileged: true
 
 groups:
   - name: dev
@@ -24,14 +24,36 @@ tests:
     group: metadataproxy.dev
 deploy:
   - name: development
-    legacy: False
+    legacy: false
+  - name: staging-orca
+    legacy: false
+    kubernetes:
+      enabled: true
+    targets:
+      - facet: orca
+    automatic: false
+    orca: []
   - name: staging
-    legacy: False
+    legacy: false
+    orca: []
+  - name: production-orca
+    legacy: false
+    kubernetes:
+      enabled: true
+    targets:
+      - facet: orca
+    automatic: false
+    orca: []
   - name: canary
-    legacy: False
+    legacy: false
+    orca: []
   - name: production
-    legacy: False
+    legacy: false
 builder:
   name: docker_build
   params:
     dockerfile: Dockerfile.private
+facets:
+  - name: orca
+    type: legacyorca
+    member: metadataproxy.server
