@@ -111,3 +111,6 @@ MESOS_STATE_LOOKUP = bool_env('MESOS_STATE_LOOKUP', False)
 MESOS_STATE_URL = str_env('MESOS_STATE_URL', 'http://localhost:5051/state')
 # Timeout to use when calling the mesos state endpoint
 MESOS_STATE_TIMEOUT = int_env('MESOS_STATE_TIMEOUT', 2)
+# Name of docker network that containers use to reach metadataproxy.
+# Used for matching containers to ip address.
+DOCKER_NETWORK = str_env('DOCKER_NETWORK')

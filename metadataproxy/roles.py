@@ -87,6 +87,34 @@ def sts_client():
 
 
 @log_exec_time
+def inspect_container_by_id(container_id):
+    client = docker_client()
+    with PrintingBlockTimer('Container inspect'):
+        return client.inspect_container(container_id)
+
+
+@log_exec_time
+def find_container_by_network(ip, network_name):
+    client = docker_client()
+    network = None
+    with PrintingBlockTimer('Network inspect'):
+        try:
+            network = client.inspect_network(network_name)
+        except docker.errors.NotFound:
+            msg = 'Could not inspect network {0}'
+            log.error(msg.format(network_name))
+            return None
+    for container_id, details in network['Containers'].items():
+        if re.sub('/.*', '', details['IPv4Address']) == ip:
+            try:
+                return inspect_container_by_id(container_id)
+            except docker.errors.NotFound:
+                log.error('Container id {0} not found'.format(container_id))
+                return None
+    return None
+
+
+@log_exec_time
 def find_container(ip):
     pattern = re.compile(app.config['HOSTNAME_MATCH_REGEX'])
     client = docker_client()
@@ -95,8 +123,7 @@ def find_container(ip):
     if container_id:
         log.info('Container id for IP {0} in cache'.format(ip))
         try:
-            with PrintingBlockTimer('Container inspect'):
-                container = client.inspect_container(container_id)
+            container = inspect_container_by_id(container_id)
             # Only return a cached container if it is running.
             if container['State']['Running']:
                 return container
@@ -109,6 +136,14 @@ def find_container(ip):
             log.error(msg.format(container_id, ip))
             if ip in CONTAINER_MAPPING:
                 del CONTAINER_MAPPING[ip]
+
+    if app.config['DOCKER_NETWORK']:
+        container = find_container_by_network(ip, app.config['DOCKER_NETWORK'])
+        if container:
+            msg = 'Container id {0} mapped to {1} by network match'
+            log.debug(msg.format(container['Id'], ip))
+            CONTAINER_MAPPING[ip] = container['Id']
+            return container
 
     _fqdn = None
     with PrintingBlockTimer('Reverse DNS'):
@@ -124,30 +159,29 @@ def find_container(ip):
 
     for _id in _ids:
         try:
-            with PrintingBlockTimer('Container inspect'):
-                c = client.inspect_container(_id)
+            container = inspect_container_by_id(_id)
         except docker.errors.NotFound:
             log.error('Container id {0} not found'.format(_id))
             continue
         # Try matching container to caller by IP address
-        _ip = c['NetworkSettings']['IPAddress']
+        _ip = container['NetworkSettings']['IPAddress']
         if ip == _ip:
             msg = 'Container id {0} mapped to {1} by IP match'
             log.debug(msg.format(_id, ip))
             CONTAINER_MAPPING[ip] = _id
-            return c
+            return container
         # Try matching container to caller by sub network IP address
-        _networks = c['NetworkSettings']['Networks']
+        _networks = container['NetworkSettings']['Networks']
         if _networks:
             for _network in _networks:
                 if _networks[_network]['IPAddress'] == ip:
                     msg = 'Container id {0} mapped to {1} by sub-network IP match'
                     log.debug(msg.format(_id, ip))
                     CONTAINER_MAPPING[ip] = _id
-                    return c
+                    return container
         # Not Found ? Let's see if we are running under rancher 1.2+,which uses a label to store the IP
         try:
-            _labels = c.get('Config', {}).get('Labels', {})
+            _labels = container.get('Config', {}).get('Labels', {})
         except (KeyError, ValueError):
             _labels = {}
         try:
@@ -159,11 +193,11 @@ def find_container(ip):
             msg = 'Container id {0} mapped to {1} by Rancher IP match'
             log.debug(msg.format(_id, ip))
             CONTAINER_MAPPING[ip] = _id
-            return c
+            return container
         # Try matching container to caller by hostname match
         if app.config['ROLE_REVERSE_LOOKUP']:
-            hostname = c['Config']['Hostname']
-            domain = c['Config']['Domainname']
+            hostname = container['Config']['Hostname']
+            domain = container['Config']['Domainname']
             fqdn = '{0}.{1}'.format(hostname, domain)
             # Default pattern matches _fqdn == fqdn
             _groups = re.match(pattern, _fqdn).groups()
@@ -173,7 +207,7 @@ def find_container(ip):
                     msg = 'Container id {0} mapped to {1} by FQDN match'
                     log.debug(msg.format(_id, ip))
                     CONTAINER_MAPPING[ip] = _id
-                    return c
+                    return container
         # Try to find the container over the mesos state api and use the labels attached to it
         # as a replacement for docker env and labels
         if app.config['MESOS_STATE_LOOKUP']:
