@@ -26,12 +26,40 @@ deploy:
   - name: development
     legacy: false
     environment: development
+  - name: staging-orca
+    environment: staging
+    legacy: false
+    v3:
+      enabled: false
+    kubernetes:
+      enabled: true
+      mode: synth
+    targets:
+      - facet: orca
+    automatic: false
+    orca: []
   - name: staging
     legacy: false
     environment: staging
+    orca: []
+    automatic: true
+  - name: production-orca
+    environment: production
+    legacy: false
+    v3:
+      enabled: false
+    kubernetes:
+      enabled: true
+      mode: synth
+    targets:
+      - facet: orca
+    automatic: false
+    orca: []
   - name: canary
     legacy: false
     environment: production
+    orca: []
+    automatic: true
   - name: production
     legacy: false
     environment: production
@@ -39,3 +67,7 @@ builder:
   name: docker_build
   params:
     dockerfile: Dockerfile.private
+facets:
+  - name: orca
+    type: legacyorca
+    member: metadataproxy.server
