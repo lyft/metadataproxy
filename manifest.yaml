@@ -26,10 +26,13 @@ deploy:
   - name: staging
     legacy: false
     automatic: false
+    environment: staging
   - name: canary
     legacy: false
+    environment: production
   - name: production
     legacy: false
+    environment: production
 builder:
   name: docker_build
   params:
