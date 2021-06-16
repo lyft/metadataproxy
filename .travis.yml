@@ -21,3 +21,4 @@ deploy:
     tags: true
     distributions: sdist bdist_wheel
     repo: lyft/metadataproxy
+    branch: pypipass2
