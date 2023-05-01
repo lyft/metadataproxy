@@ -13,7 +13,7 @@ boto3==1.9.14
 # License: BSD
 # Upstream url: http://github.com/mitsuhiko/flask/
 # Use: For API.
-Flask==1.0.2
+Flask==2.3.2
 
 # Python client for Docker.
 # License: Apache2
